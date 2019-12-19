@@ -1,0 +1,396 @@
+<template>
+  <div class="ScpcDetail">
+    <el-table id="gttTable" :cell-class-name="cellStyle"
+      ref="singleTable"
+      border
+      :data="ListData"
+      @current-change="handleCurrentChange"
+      style="width: 100%">
+      <el-table-column
+        type="index"
+        width="50">
+      </el-table-column>
+      <el-table-column
+        label="生产类型"
+        width="120">
+        <template slot-scope="scope">
+          <span>{{scope.row.topLine ? scope.row['生产类型'] : ''}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        label="产线"
+        width="120">
+        <template slot-scope="scope">
+          <span>{{scope.row.topLine ? scope.row['产线'] : ''}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        label="日期"
+        width="120">
+        <template slot-scope="scope">
+          <span>{{scope.row.topLine ? scope.row['日期'] : ''}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        property="ftype"
+        label="工单号"
+        width="120">
+      </el-table-column>
+      <el-table-column
+        label="产品名称"
+        width="150">
+        <template slot-scope="scope">
+          <span>{{scope.row.topLine ? scope.row['产品名称'] : ''}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        label="单位"
+        width="80">
+        <template slot-scope="scope">
+          <span>{{scope.row.topLine ? scope.row['单位'] : ''}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column v-for="(Week, idxW) in week" :key="idxW"
+        :label="'星期' + Week"
+        :width="hours.length * 40">
+        <template slot-scope="scope">
+          <div v-if="scope.row.topLine" style="display:flex;">
+            <div v-for="(item, idx) in hours" :key="idx" class="Item">{{item}}</div>
+          </div>
+          <div v-else style="display:flex;">
+            <div class="dayData">
+              <div class="outer"></div>
+              <div class="plant">
+                  <div v-for="(item, idx) in scope.row.formatHours[idxW]" :key="idx" v-if="item.outer" style="color: #000;text-align: center;" class="innerItem bgTransparent"></div>
+                  <span v-for="(item, idx) in scope.row.formatHours[idxW]" :key="idx" v-if="!item.outer" style="color: #000;text-align: center;" class="innerItem bgBlue borderLeft"></span>
+              </div>
+            </div>
+          </div>
+        </template>
+      </el-table-column>
+    </el-table>
+    <!-- <div class="dayData" v-for="(step, stepIdx) in showdatalist" :key="stepIdx">
+      <div class="outer"></div>
+      <div class="plant">
+          <div v-for="(item, idx) in step.showdata" :key="idx" v-if="item.outer" style="color: #000;text-align: center;" class="innerItem bgTransparent"></div>
+          <span v-for="(item, idx) in step.showdata" :key="idx" v-if="!item.outer && item.type != 100" style="color: #000;text-align: center;" class="innerItem bgBlue borderLeft"></span>
+      </div>
+    </div> -->
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'ScpcDetail',
+  data () {
+    return {
+      hours: [],
+      week: [],
+      originData: [
+        {
+          '生产类型': '紧急',
+          '产线': '洗衣粉生产线',
+          '日期': '2019-12-13',
+          '工单号': 'work001',
+          '产品名称': '洗衣粉',
+          '单位': '袋',
+          hoursData: []
+        },
+        {
+          '生产类型': '',
+          '产线': '',
+          '日期': '',
+          '工单号': '配料',
+          '产品名称': '',
+          '单位': '',
+          hoursData: [
+            {FSDate: '2019-12-17 08:00:00', FEDate: '2019-12-17 17:00:00'},
+            {FSDate: '2019-12-17 08:00:00', FEDate: '2019-12-17 12:00:00'},
+            {FSDate: '2019-12-17 13:00:00', FEDate: '2019-12-17 17:00:00'}
+          ]
+        },
+        {
+          '生产类型': '',
+          '产线': '',
+          '日期': '',
+          '工单号': '灌装',
+          '产品名称': '',
+          '单位': '',
+          hoursData: [
+            {FSDate: '2019-12-17 11:00:00', FEDate: '2019-12-17 12:00:00'},
+            {FSDate: '2019-12-17 13:00:00', FEDate: '2019-12-17 14:00:00'},
+            {FSDate: '2019-12-17 15:00:00', FEDate: '2019-12-17 17:00:00'}
+          ]
+        }
+      ],
+      ListData: []
+    }
+  },
+  created () {
+    this.formatData()
+  },
+  methods: {
+    cellStyle ({row, column, rowIndex, columnIndex}) {
+      if (columnIndex <= 6) {
+        return 'cellHasPad'
+      }
+    },
+    async formatData () {
+      let resolveIno = await this.getData()
+      let classeedData = resolveIno.classeedData
+      let minHour = Math.min(...resolveIno.allHour)
+      let maxHour = Math.max(...resolveIno.allHour)
+      // console.log('分组后数据', resolveIno)
+      // console.log(minHour)
+      // console.log(maxHour)
+      for (let i = minHour; i <= maxHour; i++) {
+        this.hours.push(Number(i))
+      }
+      this.week = [...new Set(resolveIno.allWeek)]
+      classeedData.map((classItem, classIdx) => {
+        // 插入订单信息行
+        classItem.unshift({
+          formatHours: [],
+          hoursData: [],
+          topLine: true,
+          '产品名称': classItem[0]['产品名称'],
+          '产线': classItem[0]['产线'],
+          '单位': classItem[0]['单位'],
+          '工单号': classItem[0]['工单号'],
+          ftype: classItem[0]['工单号'],
+          '日期': classItem[0]['日期'],
+          '生产类型': classItem[0]['生产类型']
+        })
+        // 工序数据重组
+        classItem.map((item, idx) => {
+          item.formatHours = []
+          if (item.weekInfo) {
+            item.weekInfo.map((itemW, idxW) => {
+              item.formatHours[idxW] = []
+              let startHour = (itemW.hours.split('-'))[0]
+              let endHour = (itemW.hours.split('-'))[1]
+              this.hours.map((Hour) => {
+                if (Hour < startHour) {
+                  item.formatHours[idxW].push({outer: true})
+                } else if (Hour >= startHour && Hour <= endHour) {
+                  item.formatHours[idxW].push({hour: Hour})
+                }
+              })
+            })
+          }
+          this.ListData.push(item)
+        })
+      })
+      console.log('classeedData', classeedData)
+    },
+    handleCurrentChange () {},
+    getData () {
+      return new Promise((resolve, reject) => {
+        var tmpData = '<?xml version="1.0" encoding="utf-8"?>'
+        tmpData += '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"> '
+        tmpData += '<soap:Body> '
+        tmpData += '<JA_LIST xmlns="http://tempuri.org/">'
+        tmpData += '<FSQL><![CDATA[ exec [z_schedule_result]]]></FSQL>'
+        tmpData += '</JA_LIST>'
+        tmpData += '</soap:Body>'
+        tmpData += '</soap:Envelope>'
+
+        this.Send.post('JA_LIST', tmpData
+        ).then(res => {
+          let xmlData = this.$x2js.xml2js(res.data)
+          let Result = xmlData.Envelope.Body.JA_LISTResponse.JA_LISTResult
+          let Info = JSON.parse(Result)
+          let weekRange = []
+          let weekIndexArr = []
+          let dayS = ''
+          let dayE = ''
+          switch (Info[0]['开始']) {
+            case '星期一':
+              dayS = 1
+              break
+            case '星期二':
+              dayS = 2
+              break
+            case '星期三':
+              dayS = 3
+              break
+            case '星期四':
+              dayS = 4
+              break
+            case '星期五':
+              dayS = 5
+              break
+            case '星期六':
+              dayS = 6
+              break
+            case '星期日':
+              dayS = 7
+              break
+          }
+          switch (Info[0]['结束']) {
+            case '星期一':
+              dayE = 1
+              break
+            case '星期二':
+              dayE = 2
+              break
+            case '星期三':
+              dayE = 3
+              break
+            case '星期四':
+              dayE = 4
+              break
+            case '星期五':
+              dayE = 5
+              break
+            case '星期六':
+              dayE = 6
+              break
+            case '星期日':
+              dayE = 7
+              break
+          }
+          for (let j = dayS; j <= dayE; j++) {
+            weekIndexArr.push(j)
+            weekRange.push({
+              week: j,
+              hours: ''
+            })
+          }
+          console.log('Info', Info)
+          // debugger
+          let AllWeek = []
+          let AllHour = []
+          let len = Info.length
+          let count = len / 4 // 订单为单位的切割数
+          let classeedData = new Array(count)
+          for (let i = 0; i < count; i++) {
+            classeedData[i] = []
+          }
+          Info.map((item, idx) => {
+            // 获取周几种类
+            item.weekInfo = weekRange.slice(0)
+            // console.log('weekRange', weekRange)
+            let week = item.value.split(',')
+            // item.weekInfo0 = week
+            week.map(stringItem => {
+              let weekIndex = ''
+              let tempArr = stringItem.split(':')
+              let hoursArr = tempArr[1].split('-')
+              switch (tempArr[0]) {
+                case '星期一':
+                  weekIndex = 1
+                  break
+                case '星期二':
+                  weekIndex = 2
+                  break
+                case '星期三':
+                  weekIndex = 3
+                  break
+                case '星期四':
+                  weekIndex = 4
+                  break
+                case '星期五':
+                  weekIndex = 5
+                  break
+                case '星期六':
+                  weekIndex = 6
+                  break
+                case '星期七':
+                  weekIndex = 7
+                  break
+              }
+              AllWeek.push(weekIndex)
+              for (let i = hoursArr[0]; i <= hoursArr[1]; i++) {
+                AllHour.push(Number(i))
+              }
+              item.weekInfo[weekIndexArr.indexOf(weekIndex)] = {
+                week: weekIndex,
+                hours: stringItem.slice(4)
+              }
+            })
+            // 按订单合并工序
+            let Index = parseInt(idx / 4)
+            classeedData[Index].unshift(item)
+          })
+          resolve({classeedData: classeedData, allWeek: AllWeek, allHour: AllHour})
+        }).catch((error) => {
+          console.log(error)
+        })
+      })
+    }
+  }
+}
+</script>
+
+<style scoped>
+/* .borderLeft:first-of-type{
+  border-top-left-radius: 7.5px;
+  border-bottom-left-radius: 7.5px;
+}
+.borderLeft:last-of-type{
+  border-top-right-radius: 7.5px;
+  border-bottom-right-radius: 7.5px;
+} */
+.outer{
+  width: 100%;
+  position: absolute;
+}
+ .plant{
+  overflow: hidden;
+  display: flex;
+}
+.outer{
+  width: 100%;
+  position: absolute;
+}
+.inner{
+  height: 15px;
+  overflow: hidden;
+  position: absolute;
+  top: 12.5px;
+}
+.Item{
+  width: 40px;
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  border-right: 1px solid #ccc;
+}
+.Item:last-of-type{
+  border-right: 0px solid #ccc;
+}
+.innerItem{
+  width: 40px;
+  height: 15px;
+  display: inline-block;
+  margin-left: -0.01px;
+}
+.innerItem span{
+  width: 100%;
+  height: 100%;
+  display: inline-block;
+  text-align: center;
+}
+.bgRedDark{
+  background: #d71345;
+}
+.bgRedLight{
+  background: #c76968;
+}
+.bgBlue{
+  background: #4e72b8;
+}
+.bgGreen{
+  background: #7fb80e;
+}
+.bgTransparent{
+  background: transparent !important;
+}
+/* .transparent{
+  filter:alpha(opacity: 50);
+  opacity: 0.5;
+  -moz-opacity: 0.5;
+  -khtml-opacity: 0.5;
+} */
+</style>
