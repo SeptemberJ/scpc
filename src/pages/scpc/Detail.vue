@@ -1,39 +1,55 @@
 <template>
   <div class="ScpcDetail">
+    <el-button type="primary" size="small" @click="toChoose" style="float:right;margin-right:20px;margin-bottom:20px;">选择订单</el-button>
     <el-table id="gttTable" :cell-class-name="cellStyle"
       ref="singleTable"
       border
       :data="ListData"
-      @current-change="handleCurrentChange"
       style="width: 100%">
       <el-table-column
         type="index"
         width="50">
       </el-table-column>
       <el-table-column
-        label="生产类型"
+        property="线别"
+        label="线别"
         width="120">
-        <template slot-scope="scope">
-          <span>{{scope.row.topLine ? scope.row['生产类型'] : ''}}</span>
-        </template>
       </el-table-column>
       <el-table-column
-        label="产线"
+        property="零件名称"
+        label="零件名称"
         width="120">
-        <template slot-scope="scope">
-          <span>{{scope.row.topLine ? scope.row['产线'] : ''}}</span>
-        </template>
       </el-table-column>
       <el-table-column
-        label="日期"
+        property="零件规格"
+        label="零件规格"
         width="120">
-        <template slot-scope="scope">
-          <span>{{scope.row.topLine ? scope.row['日期'] : ''}}</span>
-        </template>
       </el-table-column>
       <el-table-column
-        property="ftype"
+        property="单位"
+        label="单位"
+        width="120">
+      </el-table-column>
+      <el-table-column
+        property="工单号"
         label="工单号"
+        width="120">
+      </el-table-column>
+      <!-- <el-table-column
+        label="工单号"
+        width="120">
+        <template slot-scope="scope">
+          <span>{{scope.row.topLine ? scope.row['工单号'] : ''}}</span>
+        </template>
+      </el-table-column> -->
+      <el-table-column
+        property="订单日期"
+        label="订单日期"
+        width="160">
+      </el-table-column>
+      <el-table-column
+        property="订单号"
+        label="订单号"
         width="120">
       </el-table-column>
       <el-table-column
@@ -44,38 +60,158 @@
         </template>
       </el-table-column>
       <el-table-column
-        label="单位"
-        width="80">
+        property="产品工单号"
+        label="产品工单号"
+        width="120">
+      </el-table-column>
+      <el-table-column
+        property="产品规格"
+        label="产品规格"
+        width="120">
+      </el-table-column>
+      <el-table-column
+        property="产品工单号"
+        label="产品工单号"
+        width="120">
+      </el-table-column>
+      <el-table-column
+        property="零件毛需求数量"
+        label="零件毛需求数量"
+        width="120">
+      </el-table-column>
+      <el-table-column
+        property="可用库存"
+        label="可用库存"
+        width="120">
+      </el-table-column>
+      <el-table-column
+        property="零件净需求数量"
+        label="零件净需求数量"
+        width="120">
+      </el-table-column>
+      <el-table-column
+        property="可生产数量"
+        label="可生产数量"
+        width="120">
+      </el-table-column>
+      <el-table-column
+        property="本次计划数量"
+        label="本次计划数量"
+        width="120">
+      </el-table-column>
+      <el-table-column
+        label="单位产能"
+        width="120">
         <template slot-scope="scope">
-          <span>{{scope.row.topLine ? scope.row['单位'] : ''}}</span>
+          <span>{{scope.row['计划工作时间']}}<i v-if="scope.row['线别']" class="el-icon-edit" style="cursor:pointer;float:right;margin-right:5px;margin-top:5px;" @click="editCN(scope.$index, scope.row)"></i></span>
         </template>
       </el-table-column>
-      <el-table-column v-for="(Week, idxW) in week" :key="idxW"
-        :label="'星期' + Week"
+      <el-table-column
+        label="需求人数"
+        width="120">
+        <template slot-scope="scope">
+          <span>{{scope.row['需求人数']}}<i v-if="scope.row['线别']" class="el-icon-edit" style="cursor:pointer;float:right;margin-right:5px;margin-top:5px;" @click="editRS(scope.$index, scope.row)"></i></span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        property="process"
+        label="产线"
+        width="120">
+      </el-table-column>
+      <el-table-column
+        label="时间"
         :width="hours.length * 40">
+        <!-- <template slot="header">
+          <div style="display:flex;">
+            <div v-for="(item, idx) in hours" :key="idx" class="Item">{{item}}</div>
+          </div>
+        </template> -->
         <template slot-scope="scope">
           <div v-if="scope.row.topLine" style="display:flex;">
             <div v-for="(item, idx) in hours" :key="idx" class="Item">{{item}}</div>
           </div>
-          <div v-else style="display:flex;">
+          <div style="display:flex;">
             <div class="dayData">
               <div class="outer"></div>
               <div class="plant">
-                  <div v-for="(item, idx) in scope.row.formatHours[idxW]" :key="idx" v-if="item.outer" style="color: #000;text-align: center;" class="innerItem bgTransparent"></div>
-                  <span v-for="(item, idx) in scope.row.formatHours[idxW]" :key="idx" v-if="!item.outer" style="color: #000;text-align: center;" class="innerItem bgBlue borderLeft"></span>
+                <span v-for="(item, idx) in scope.row.formatHours" :key="idx" style="color: #000;text-align: center;" :class="[item.outer ? 'innerItem bgTransparent' : 'innerItem bgBlue']"></span>
               </div>
             </div>
           </div>
         </template>
       </el-table-column>
     </el-table>
-    <!-- <div class="dayData" v-for="(step, stepIdx) in showdatalist" :key="stepIdx">
-      <div class="outer"></div>
-      <div class="plant">
-          <div v-for="(item, idx) in step.showdata" :key="idx" v-if="item.outer" style="color: #000;text-align: center;" class="innerItem bgTransparent"></div>
-          <span v-for="(item, idx) in step.showdata" :key="idx" v-if="!item.outer && item.type != 100" style="color: #000;text-align: center;" class="innerItem bgBlue borderLeft"></span>
-      </div>
-    </div> -->
+    <!-- 选择订单框 -->
+    <el-dialog
+      title="选择订单"
+      :visible.sync="dialogVisibleOrderList"
+      width="90%">
+      <el-table
+        ref="multipleTable"
+        :data="chooseOrderList"
+        tooltip-effect="dark"
+        style="width: 100%"
+        @selection-change="changeChoosedOrder">
+        <el-table-column
+          type="selection"
+          width="60">
+        </el-table-column>
+        <el-table-column
+          property="交货日期"
+          label="交货日期"
+          width="100">
+        </el-table-column>
+        <el-table-column
+          property="物料名称"
+          label="物料名称">
+        </el-table-column>
+        <el-table-column
+          property="物料代码"
+          label="物料代码"
+          width="120">
+        </el-table-column>
+        <el-table-column
+          property="数量"
+          label="数量"
+          width="120">
+        </el-table-column>
+        <el-table-column
+          property="单位"
+          label="单位"
+          width="80">
+        </el-table-column>
+        <el-table-column
+          property="客户名称"
+          label="客户名称">
+        </el-table-column>
+        <el-table-column
+          property="单据日期"
+          label="单据日期"
+          width="100">
+        </el-table-column>
+        <el-table-column
+          property="单据编号"
+          label="单据编号"
+          width="120">
+        </el-table-column>
+      </el-table>
+      <span slot="footer" class="dialog-footer">
+        <el-button size="small"  @click="dialogVisibleOrderList = false">取 消</el-button>
+        <el-button type="primary" size="small" @click="analysis">分析</el-button>
+      </span>
+    </el-dialog>
+    <!-- 修改列 -->
+    <el-dialog
+      :title="editType == 0 ? '修改单位产能' : '修改需求人数'"
+      :visible.sync="dialogVisibleEdit"
+      width="450px">
+      <el-input v-if="editType == 0" v-model="curCN" placeholder="请输入单位产能"></el-input>
+      <el-input v-if="editType == 1" v-model="curRS" placeholder="请输入需求人数"></el-input>
+      <span slot="footer" class="dialog-footer">
+        <el-button size="small"  @click="dialogVisibleEdit = false">取 消</el-button>
+        <el-button type="primary" size="small" @click="saveEdit">保 存</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -84,113 +220,225 @@ export default {
   name: 'ScpcDetail',
   data () {
     return {
+      dialogVisibleOrderList: false,
+      dialogVisibleEdit: false,
+      chooseOrderList: [],
+      choosedOrder: [],
       hours: [],
       week: [],
-      originData: [
-        {
-          '生产类型': '紧急',
-          '产线': '洗衣粉生产线',
-          '日期': '2019-12-13',
-          '工单号': 'work001',
-          '产品名称': '洗衣粉',
-          '单位': '袋',
-          hoursData: []
-        },
-        {
-          '生产类型': '',
-          '产线': '',
-          '日期': '',
-          '工单号': '配料',
-          '产品名称': '',
-          '单位': '',
-          hoursData: [
-            {FSDate: '2019-12-17 08:00:00', FEDate: '2019-12-17 17:00:00'},
-            {FSDate: '2019-12-17 08:00:00', FEDate: '2019-12-17 12:00:00'},
-            {FSDate: '2019-12-17 13:00:00', FEDate: '2019-12-17 17:00:00'}
-          ]
-        },
-        {
-          '生产类型': '',
-          '产线': '',
-          '日期': '',
-          '工单号': '灌装',
-          '产品名称': '',
-          '单位': '',
-          hoursData: [
-            {FSDate: '2019-12-17 11:00:00', FEDate: '2019-12-17 12:00:00'},
-            {FSDate: '2019-12-17 13:00:00', FEDate: '2019-12-17 14:00:00'},
-            {FSDate: '2019-12-17 15:00:00', FEDate: '2019-12-17 17:00:00'}
-          ]
-        }
-      ],
-      ListData: []
+      // originData: [
+      //   {
+      //     '生产类型': '紧急',
+      //     '产线': '洗衣粉生产线',
+      //     '日期': '2019-12-13',
+      //     '工单号': 'work001',
+      //     '产品名称': '洗衣粉',
+      //     '单位': '袋',
+      //     hoursData: []
+      //   },
+      //   {
+      //     '生产类型': '',
+      //     '产线': '',
+      //     '日期': '',
+      //     '工单号': '配料',
+      //     '产品名称': '',
+      //     '单位': '',
+      //     hoursData: [
+      //       {FSDate: '2019-12-17 08:00:00', FEDate: '2019-12-17 17:00:00'},
+      //       {FSDate: '2019-12-17 08:00:00', FEDate: '2019-12-17 12:00:00'},
+      //       {FSDate: '2019-12-17 13:00:00', FEDate: '2019-12-17 17:00:00'}
+      //     ]
+      //   },
+      //   {
+      //     '生产类型': '',
+      //     '产线': '',
+      //     '日期': '',
+      //     '工单号': '灌装',
+      //     '产品名称': '',
+      //     '单位': '',
+      //     hoursData: [
+      //       {FSDate: '2019-12-17 11:00:00', FEDate: '2019-12-17 12:00:00'},
+      //       {FSDate: '2019-12-17 13:00:00', FEDate: '2019-12-17 14:00:00'},
+      //       {FSDate: '2019-12-17 15:00:00', FEDate: '2019-12-17 17:00:00'}
+      //     ]
+      //   }
+      // ],
+      ListData: [],
+      curCN: '',
+      curRS: '',
+      editLine: {}, // 修改行信息
+      editType: 0 // 0-产能 1-人数
     }
   },
   created () {
-    this.formatData()
+    for (let i = 1; i <= 36; i++) {
+      this.hours.push(Number(i))
+    }
+    // this.formatData()
   },
   methods: {
     cellStyle ({row, column, rowIndex, columnIndex}) {
-      if (columnIndex <= 6) {
+      if (columnIndex <= 19) {
         return 'cellHasPad'
       }
     },
+    toChoose () {
+      this.dialogVisibleOrderList = true
+      this.getOrderList()
+    },
+    changeChoosedOrder (value) {
+      this.choosedOrder = value
+    },
+    analysis () {
+      if (this.choosedOrder.length === 0) {
+        this.$message({
+          message: '请至少选择一条要分析的订单!',
+          type: 'warning'
+        })
+        return false
+      }
+      let DATA = {
+        items: this.choosedOrder.map(item => {
+          return {
+            FInterID: item.FInterID,
+            FEntryID: item.FEntryID
+          }
+        })
+      }
+      var tmpData = '<?xml version="1.0" encoding="utf-8"?>'
+      tmpData += '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"> '
+      tmpData += '<soap:Body> '
+      tmpData += '<SEOrder xmlns="http://tempuri.org/">'
+      tmpData += '<FJSON>' + JSON.stringify(DATA) + '</FJSON>'
+      tmpData += '</SEOrder >'
+      tmpData += '</soap:Body>'
+      tmpData += '</soap:Envelope>'
+
+      this.Send.post('SEOrder ', tmpData
+      ).then(res => {
+        let xmlData = this.$x2js.xml2js(res.data)
+        let Result = xmlData.Envelope.Body.SEOrderResponse.SEOrderResult
+        let Info = JSON.parse(Result)
+        if (Info[0].code === '1') {
+          this.formatData()
+          this.dialogVisibleOrderList = false
+        }
+      }).catch((error) => {
+        console.log(error)
+      })
+    },
+    editCN (idx, row) {
+      this.dialogVisibleEdit = true
+      this.editType = 0
+      this.curCN = row['计划工作时间']
+      this.editLine = row
+    },
+    editRS (idx, row) {
+      this.dialogVisibleEdit = true
+      this.editType = 1
+      this.curRS = row['需求人数']
+      this.editLine = row
+    },
+    saveEdit () {
+      if (this.editType === 0 && !this.curCN) {
+        this.$message({
+          message: '请输入新的单位产能!',
+          type: 'warning'
+        })
+        return false
+      }
+      if (this.editType === 1 && !this.curRS) {
+        this.$message({
+          message: '请输入新的需求人数!',
+          type: 'warning'
+        })
+        return false
+      }
+      let DATA = {
+        items: [{
+          FBillNO: this.editLine.FBillNO,
+          FItemID: this.editLine.FItemID,
+          process: this.editLine['工单号'],
+          FProductionline: this.editLine['线别'],
+          single_capacity: this.editType === 0 ? this.curCN : this.editLine['计划工作时间'],
+          number: this.editType === 0 ? this.editLine['需求人数'] : this.curRS
+        }]
+      }
+      var tmpData = '<?xml version="1.0" encoding="utf-8"?>'
+      tmpData += '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"> '
+      tmpData += '<soap:Body> '
+      tmpData += '<Update xmlns="http://tempuri.org/">'
+      tmpData += '<FJSON>' + JSON.stringify(DATA) + '</FJSON>'
+      tmpData += '</Update>'
+      tmpData += '</soap:Body>'
+      tmpData += '</soap:Envelope>'
+
+      this.Send.post('Update', tmpData
+      ).then(res => {
+        let xmlData = this.$x2js.xml2js(res.data)
+        let Result = xmlData.Envelope.Body.UpdateResponse.UpdateResult
+        let Info = JSON.parse(Result)
+        if (Info[0].code === '1') {
+          this.dialogVisibleEdit = false
+          this.editLine = {}
+          this.editType = ''
+          this.curCN = ''
+          this.curRS = ''
+          this.$message({
+            message: '修改成功!',
+            type: 'success'
+          })
+          this.formatData()
+        }
+      }).catch((error) => {
+        console.log(error)
+      })
+    },
+    getOrderList () {
+      var tmpData = '<?xml version="1.0" encoding="utf-8"?>'
+      tmpData += '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"> '
+      tmpData += '<soap:Body> '
+      tmpData += '<JA_LIST xmlns="http://tempuri.org/">'
+      tmpData += '<FSQL><![CDATA[select * from Z_Seorder_List]]></FSQL>'
+      tmpData += '</JA_LIST>'
+      tmpData += '</soap:Body>'
+      tmpData += '</soap:Envelope>'
+
+      this.Send.post('JA_LIST', tmpData
+      ).then(res => {
+        let xmlData = this.$x2js.xml2js(res.data)
+        let Result = xmlData.Envelope.Body.JA_LISTResponse.JA_LISTResult
+        let Info = JSON.parse(Result)
+        this.chooseOrderList = Info
+      }).catch((error) => {
+        console.log(error)
+      })
+    },
     async formatData () {
       let resolveIno = await this.getData()
-      let classeedData = resolveIno.classeedData
-      let minHour = Math.min(...resolveIno.allHour)
-      let maxHour = Math.max(...resolveIno.allHour)
-      // console.log('分组后数据', resolveIno)
-      // console.log(minHour)
-      // console.log(maxHour)
-      for (let i = minHour; i <= maxHour; i++) {
-        this.hours.push(Number(i))
-      }
-      this.week = [...new Set(resolveIno.allWeek)]
-      classeedData.map((classItem, classIdx) => {
-        // 插入订单信息行
-        classItem.unshift({
-          formatHours: [],
-          hoursData: [],
-          topLine: true,
-          '产品名称': classItem[0]['产品名称'],
-          '产线': classItem[0]['产线'],
-          '单位': classItem[0]['单位'],
-          '工单号': classItem[0]['工单号'],
-          ftype: classItem[0]['工单号'],
-          '日期': classItem[0]['日期'],
-          '生产类型': classItem[0]['生产类型']
-        })
-        // 工序数据重组
-        classItem.map((item, idx) => {
-          item.formatHours = []
-          if (item.weekInfo) {
-            item.weekInfo.map((itemW, idxW) => {
-              item.formatHours[idxW] = []
-              let startHour = (itemW.hours.split('-'))[0]
-              let endHour = (itemW.hours.split('-'))[1]
-              this.hours.map((Hour) => {
-                if (Hour < startHour) {
-                  item.formatHours[idxW].push({outer: true})
-                } else if (Hour >= startHour && Hour <= endHour) {
-                  item.formatHours[idxW].push({hour: Hour})
-                }
-              })
-            })
-          }
-          this.ListData.push(item)
-        })
+      console.log(resolveIno)
+      resolveIno.map(item => {
+        item.formatHours = []
+        if (!item.topLine) {
+          this.hours.map(hour => {
+            let Index = item.hours.indexOf(hour)
+            if (Index === -1) {
+              item.formatHours.push({outer: true})
+            } else {
+              item.formatHours.push({outer: false})
+            }
+          })
+        }
       })
-      console.log('classeedData', classeedData)
+      this.ListData = resolveIno
     },
-    handleCurrentChange () {},
     getData () {
       return new Promise((resolve, reject) => {
         var tmpData = '<?xml version="1.0" encoding="utf-8"?>'
         tmpData += '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"> '
         tmpData += '<soap:Body> '
         tmpData += '<JA_LIST xmlns="http://tempuri.org/">'
-        tmpData += '<FSQL><![CDATA[ exec [z_schedule_result]]]></FSQL>'
+        tmpData += '<FSQL><![CDATA[exec [Z_Schedule]]]></FSQL>'
         tmpData += '</JA_LIST>'
         tmpData += '</soap:Body>'
         tmpData += '</soap:Envelope>'
@@ -200,130 +448,62 @@ export default {
           let xmlData = this.$x2js.xml2js(res.data)
           let Result = xmlData.Envelope.Body.JA_LISTResponse.JA_LISTResult
           let Info = JSON.parse(Result)
-          let weekRange = []
-          let weekIndexArr = []
-          let dayS = ''
-          let dayE = ''
-          switch (Info[0]['开始']) {
-            case '星期一':
-              dayS = 1
-              break
-            case '星期二':
-              dayS = 2
-              break
-            case '星期三':
-              dayS = 3
-              break
-            case '星期四':
-              dayS = 4
-              break
-            case '星期五':
-              dayS = 5
-              break
-            case '星期六':
-              dayS = 6
-              break
-            case '星期日':
-              dayS = 7
-              break
-          }
-          switch (Info[0]['结束']) {
-            case '星期一':
-              dayE = 1
-              break
-            case '星期二':
-              dayE = 2
-              break
-            case '星期三':
-              dayE = 3
-              break
-            case '星期四':
-              dayE = 4
-              break
-            case '星期五':
-              dayE = 5
-              break
-            case '星期六':
-              dayE = 6
-              break
-            case '星期日':
-              dayE = 7
-              break
-          }
-          for (let j = dayS; j <= dayE; j++) {
-            weekIndexArr.push(j)
-            weekRange.push({
-              week: j,
-              hours: ''
-            })
-          }
-          console.log('Info', Info)
-          // debugger
-          let AllWeek = []
-          let AllHour = []
-          let len = Info.length
-          let count = len / 4 // 订单为单位的切割数
-          let classeedData = new Array(count)
-          for (let i = 0; i < count; i++) {
-            classeedData[i] = []
-          }
-          Info.map((item, idx) => {
-            // 获取周几种类
-            item.weekInfo = weekRange.slice(0)
-            // console.log('weekRange', weekRange)
-            let week = item.value.split(',')
-            // item.weekInfo0 = week
-            week.map(stringItem => {
-              let weekIndex = ''
-              let tempArr = stringItem.split(':')
-              let hoursArr = tempArr[1].split('-')
-              switch (tempArr[0]) {
-                case '星期一':
-                  weekIndex = 1
-                  break
-                case '星期二':
-                  weekIndex = 2
-                  break
-                case '星期三':
-                  weekIndex = 3
-                  break
-                case '星期四':
-                  weekIndex = 4
-                  break
-                case '星期五':
-                  weekIndex = 5
-                  break
-                case '星期六':
-                  weekIndex = 6
-                  break
-                case '星期七':
-                  weekIndex = 7
-                  break
-              }
-              AllWeek.push(weekIndex)
-              for (let i = hoursArr[0]; i <= hoursArr[1]; i++) {
-                AllHour.push(Number(i))
-              }
-              item.weekInfo[weekIndexArr.indexOf(weekIndex)] = {
-                week: weekIndex,
-                hours: stringItem.slice(4)
-              }
-            })
-            // 按订单合并工序
-            let Index = parseInt(idx / 4)
-            classeedData[Index].unshift(item)
+          console.log(Info)
+          Info.map(item => {
+            if (item['工单号'] === '') {
+              item.topLine = true
+              item.value = ''
+            }
+            // item.topLine = false
+            // item.value = ''
+            item.hours = []
+            let hoursArr = item.value.split(',') // 小时切分
+            item.hoursData = hoursArr
+            if (item.hoursData.length > 0) {
+              // item.hourRange = []
+              item.hoursData.map(hour => {
+                let startHour = Number((hour.split('-'))[0])
+                let endHour = Number((hour.split('-'))[1])
+                // item.hourRange.push({start: startHour, end: endHour})
+                for (let i = startHour; i < endHour; i++) {
+                  item.hours.push(Number(i))
+                }
+              })
+            }
+            return item
           })
-          resolve({classeedData: classeedData, allWeek: AllWeek, allHour: AllHour})
+          resolve(Info)
         }).catch((error) => {
           console.log(error)
         })
       })
+    },
+    ransformWeek (weekStr) {
+      switch (weekStr) {
+        case '星期一':
+          return 1
+        case '星期二':
+          return 2
+        case '星期三':
+          return 3
+        case '星期四':
+          return 4
+        case '星期五':
+          return 5
+        case '星期六':
+          return 6
+        case '星期日':
+          return 7
+      }
     }
   }
 }
 </script>
 
 <style scoped>
+.ScpcDetail{
+  padding: 20px 0;
+}
 /* .borderLeft:first-of-type{
   border-top-left-radius: 7.5px;
   border-bottom-left-radius: 7.5px;
@@ -353,9 +533,9 @@ export default {
 .Item{
   width: 40px;
   display: flex;
-  justify-content: center;
+  /* justify-content: center; */
   align-content: center;
-  border-right: 1px solid #ccc;
+  /* border-right: 1px solid #ccc; */
 }
 .Item:last-of-type{
   border-right: 0px solid #ccc;
