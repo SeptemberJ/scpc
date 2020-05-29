@@ -1,28 +1,34 @@
 <template>
   <div class="ScpcDetail">
+    <el-button type="warning" size="small" @click="sureA" style="float:right;margin-right:20px;margin-bottom:20px;">分析确认</el-button>
     <el-button type="primary" size="small" @click="toChoose" style="float:right;margin-right:20px;margin-bottom:20px;">选择订单</el-button>
-    <el-table id="gttTable" :cell-class-name="cellStyle"
+    <el-table id="gttTable" :cell-class-name="cellStyle" :header-cell-style="getRowClass"
       ref="singleTable"
       border
       :data="ListData"
+      :height="Height"
       style="width: 100%">
       <el-table-column
         type="index"
+        fixed
         width="50">
       </el-table-column>
       <el-table-column
         property="线别"
         label="线别"
+        fixed
         width="120">
       </el-table-column>
       <el-table-column
         property="零件名称"
         label="零件名称"
+        fixed
         width="120">
       </el-table-column>
       <el-table-column
         property="零件规格"
         label="零件规格"
+        fixed
         width="120">
       </el-table-column>
       <el-table-column
@@ -67,11 +73,6 @@
       <el-table-column
         property="产品规格"
         label="产品规格"
-        width="120">
-      </el-table-column>
-      <el-table-column
-        property="产品工单号"
-        label="产品工单号"
         width="120">
       </el-table-column>
       <el-table-column
@@ -222,6 +223,7 @@ export default {
     return {
       dialogVisibleOrderList: false,
       dialogVisibleEdit: false,
+      Height: 0,
       chooseOrderList: [],
       choosedOrder: [],
       hours: [],
@@ -274,12 +276,20 @@ export default {
     for (let i = 1; i <= 36; i++) {
       this.hours.push(Number(i))
     }
+    this.Height = document.body.clientHeight - 100
     // this.formatData()
   },
   methods: {
     cellStyle ({row, column, rowIndex, columnIndex}) {
-      if (columnIndex <= 19) {
+      if (columnIndex <= 18) {
         return 'cellHasPad'
+      }
+    },
+    getRowClass ({row, column, rowIndex, columnIndex}) {
+      if (rowIndex === 0) {
+        return 'background: rgb(121, 187, 255);color: #fff'
+      } else {
+        return ''
       }
     },
     toChoose () {
@@ -394,6 +404,37 @@ export default {
         console.log(error)
       })
     },
+    sureA () {
+      var tmpData = '<?xml version="1.0" encoding="utf-8"?>'
+      tmpData += '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"> '
+      tmpData += '<soap:Body> '
+      tmpData += '<ICMO xmlns="http://tempuri.org/">'
+      tmpData += '<FStauts>' + 1 + '</FStauts>'
+      tmpData += '</ICMO>'
+      tmpData += '</soap:Body>'
+      tmpData += '</soap:Envelope>'
+
+      this.Send.post('ICMO', tmpData
+      ).then(res => {
+        let xmlData = this.$x2js.xml2js(res.data)
+        let Result = xmlData.Envelope.Body.ICMOResponse.ICMOResult
+        let Info = JSON.parse(Result)
+        if (Info[0].code === '1') {
+          this.dialogVisibleEdit = false
+          this.editLine = {}
+          this.editType = ''
+          this.curCN = ''
+          this.curRS = ''
+          this.$message({
+            message: '分析确认成功!',
+            type: 'success'
+          })
+          this.formatData()
+        }
+      }).catch((error) => {
+        console.log(error)
+      })
+    },
     getOrderList () {
       var tmpData = '<?xml version="1.0" encoding="utf-8"?>'
       tmpData += '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"> '
@@ -450,7 +491,7 @@ export default {
           let Info = JSON.parse(Result)
           console.log(Info)
           Info.map(item => {
-            if (item['工单号'] === '') {
+            if (item['线别'] === '' || !item['线别']) {
               item.topLine = true
               item.value = ''
             }
